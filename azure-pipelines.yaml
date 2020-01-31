@@ -35,10 +35,12 @@ jobs:
       conda create --yes --quiet --name TileDB-FastQ
       source activate TileDB-FastQ
       conda install -y tiledb cmake
-    displayName: Create Conda environment
+    displayName: Create Conda environment and install dependencies
 
   - bash: |
       source activate TileDB-FastQ 
       mkdir build && cd build
       cmake -DCMAKE_PREFIX_PATH=${CONDA_PREFIX} ../libtiledbfq
+      make
+      make check
     displayName: Build and test TileDB-FastQ
