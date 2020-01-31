@@ -1,0 +1,44 @@
+trigger:
+  tags:
+    include:
+      - v*
+  branches:
+    include:
+    - master
+
+
+# test and upload my code as an artifact named WebSite
+jobs:
+- job: Build
+  strategy:
+    matrix:
+      macOS:
+        imageName: 'macOS-10.13'
+        python.version: '3.7'
+      linux_py37:
+        imageName: 'ubuntu-16.04'
+        python.version: '3.7'
+  pool:
+    vmImage: $(imageName)
+
+  steps:
+  - bash: echo "##vso[task.prependpath]$CONDA/bin"
+    displayName: Add conda to PATH
+  
+  # On Hosted macOS, the agent user doesn't have ownership of Miniconda's installation directory/
+  # We need to take ownership if we want to update conda or install packages globally
+  - bash: sudo chown -R $USER $CONDA
+    displayName: Take ownership of conda installation
+    condition: eq(variables['Agent.OS'], 'Darwin')
+
+  - bash: |
+      conda create --yes --quiet --name TileDB-FastQ
+      source activate TileDB-FastQ
+      conda install tiledb cmake
+    displayName: Create Conda environment
+
+  - bash: |
+      source activate TileDB-FastQ 
+      mkdir build && cd build
+      cmake -DCMAKE_PREFIX_PATH=${CONDA_PREFIX} ../libtiledbfq
+    displayName: Build and test TileDB-FastQ
